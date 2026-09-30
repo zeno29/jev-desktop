@@ -1,0 +1,14 @@
+typesafe-sdk>=0.7.2
+google-genai>=2.25.0
+playwright>=1.63.0
+rapidfuzz>=3.14
+python-dotenv>=1.2
+httpx>=0.28
+pywebview>=6.2
+pillow>=12.0
+# voice: microphone / speakers, and the built-in Windows voice
+sounddevice>=0.5.2
+numpy>=2.2
+comtypes>=1.4
+pycaw>=20240316              # lowers other apps' volume while Jev listens
+onnxruntime>=1.20              # Silero voice-activity model: reliable end-of-speech with music playing

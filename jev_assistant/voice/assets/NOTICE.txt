@@ -1,0 +1,2 @@
+
+Silero VAD model (jev_assistant/voice/assets/silero_vad_v6.onnx): MIT License, (c) Silero Team, https://github.com/snakers4/silero-vad

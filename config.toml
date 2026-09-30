@@ -1,0 +1,124 @@
+# Jev Desktop configuration. API keys live in .env, not here.
+
+[jev]
+model = "jev-latest"
+timeout_seconds = 2.0        # if Jev doesn't answer in time, the local rules / LLM take over
+# Thresholds are starting points — tune them on your own commands (run with --trace to see scores).
+tool_threshold = 0.70        # min confidence in the chosen action before running it directly
+param_threshold = 0.60       # min confidence per argument (for song/search/site: P(something was named))
+deep_threshold = 0.50        # "needs thinking" probability at which we escalate to the big model
+
+# Gate each action by what a mistake costs. Unlisted actions use tool_threshold.
+[jev.action_thresholds]
+open_app = 0.65
+play_music = 0.65
+play_video = 0.65
+web_search = 0.65
+check_email = 0.65               # read-only: a wrong guess just lists mail
+open_website = 0.65
+media_control = 0.70
+set_timer = 0.70
+close_app = 0.85
+system_action = 0.85         # includes lock screen
+
+[llm]
+# Google Gemini (key: GEMINI_API_KEY in .env)
+fast_model = "gemini-3.5-flash-lite"  # quick replies, email drafting, ambiguous commands
+deep_model = "gemini-3.8-flash"       # multi-step / research / browser workflows
+                                      # stronger reasoning, still in preview: "gemini-3.1-pro-preview"
+fast_thinking = "minimal"             # minimal | low | medium | high (3.8 Flash: low..high only)
+deep_thinking = "medium"              # "high" is noticeably smarter on hard tasks but much slower
+fast_timeout_seconds = 30             # give up (instead of retrying for minutes) if a model is overloaded
+deep_timeout_seconds = 120            # per model call; a deep task may make several calls
+deep_google_search = false            # Gemini's built-in search grounding; your plan's quota rejected it,
+                                      # so the deep tier searches through the browser instead
+max_agent_steps = 25
+command_timeout_seconds = 150     # any command still running after this is stopped, so Jev never gets stuck
+history_turns = 6                 # recent exchanges passed to the LLM for context
+
+[browser]
+mode = "real"                     # "real": search / sites / YouTube / email drafts open as new tabs in your own
+                                  #   logged-in Google Chrome (Jev can open pages there, not click in them).
+                                  # "automation": everything runs in the Playwright window below instead
+                                  #   (auto-clicks Play and Send, but you log in to sites there separately).
+profile_directory = "Profile 1"   # "Tushar". Which Chrome profile real mode opens in: folder ("Default", "Profile 1")
+                                  #   or display name. Unset = the profile you used last. List yours with:
+                                  #   .venv\Scripts\python -m jev_assistant.actions.browser
+# chrome_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"   # unset = auto-detect
+
+# Playwright automation window: used for every command in automation mode, and in real mode only
+# when the deep agent needs to read or click inside pages (log in there once if it needs your accounts).
+channel = "chrome"                # your installed Google Chrome ("msedge" for Edge, "" for bundled Chromium)
+profile_dir = "data/browser-profile"  # persistent: log in to Gmail/YouTube/etc. once, stays logged in
+headless = false
+prewarm = false                   # automation mode: true opens that window at launch (~1 s faster first command)
+
+[music]
+provider = "spotify"              # "spotify": desktop app via Spotify Web API (Premium + SPOTIFY_CLIENT_ID),
+                                  #   falling back to the web player in Chrome; "youtube": YouTube in Chrome.
+                                  # Saying "on youtube"/"on spotify" overrides this per command.
+
+[email]
+provider = "gmail"                # "gmail" or "outlook"
+outlook_base = "https://outlook.live.com"   # use https://outlook.office.com for work/school accounts
+
+[ui]
+hotkey = "ctrl+alt+j"             # voice activation from anywhere, e.g. "ctrl+space", "alt+j", "win+shift+j"
+orb_size = 120                    # the arc-reactor widget (starts top-right; drag it anywhere, position is kept)
+orb_on_top = true                 # false = the widget sits behind other windows like a desktop gadget
+auto_hide_seconds = 20            # hide the typing console this long after the last reply (0 = never)
+
+[voice]
+# Ctrl+Alt+J (the [ui] hotkey): speak, and the reply is spoken back. Typed commands stay silent.
+enabled = true
+stt_provider = "auto"             # auto | gemini | sarvam | local
+tts_provider = "auto"             # auto | gemini | sarvam | kokoro | windows
+                                  # auto = Sarvam if SARVAM_API_KEY is set, else Gemini if GEMINI_API_KEY,
+                                  # else offline (kokoro only when chosen: nicer, but ~1.5 s on a laptop CPU).
+                                  # If a provider fails, the next available one takes over.
+language = "en-IN"                # en-IN: Hinglish comes back in Roman script ("Spotify pe gaane chalao")
+gemini_stt_model = "gemini-3.5-transcribe-live"
+gemini_tts_model = "gemini-3.8-flash-lite-tts"   # or "gemini-3.8-flash-tts" (richer, slower)
+gemini_voice = "Kore"
+gemini_tts_style = ""             # optional delivery note, e.g. "warm and brisk"
+sarvam_stt_model = "saaras:v3"
+sarvam_stt_mode = "translit"      # translit: Roman-script output; codemix: Hindi words in Devanagari
+sarvam_stt_language = "hi-IN"
+sarvam_tts_model = "bulbul:v3"
+sarvam_speaker = "shubh"
+local_stt_model = "auto"          # auto: the Hinglish model from `python -m jev_assistant.voice.setup_local`
+                                  # if present, else Whisper "base"; or "small", or a model folder path
+kokoro_voice = "af_heart"         # offline TTS (optional, see README)
+windows_voice = ""                # part of a Windows voice name, e.g. "Zira"; "" = default voice
+vad_silence_ms = 700              # this much silence ends what you're saying
+max_seconds = 15                  # longest single command
+no_speech_seconds = 5             # stop listening if you say nothing
+cache = true                      # short replies ("Opening Spotify.") are kept in data/tts_cache
+speak_typed = false               # true: also speak replies to typed commands
+bubble = true                     # show the spoken reply beside the widget
+chime = true
+duck_level = 0.15                 # while Jev listens or talks, other apps (Spotify, YouTube...) drop to 15% of
+                                  # their volume, so music doesn't drown your voice; 1.0 = don't touch them
+noise_gate = true                 # sound that isn't louder than the background (a TV, lyrics between your
+                                  # words) is turned down before it's transcribed
+input_device = ""                 # part of a device name, e.g. "Headset"; "" = Windows default
+output_device = ""
+
+# Spoken name -> installed app name (as shown in the Start menu), or a path / URI to launch.
+[app_aliases]
+"vs code" = "Visual Studio Code"
+"code" = "Visual Studio Code"
+"browser" = "Microsoft Edge"
+"calc" = "Calculator"
+"terminal" = "Terminal"
+
+# Spoken site name -> URL, for "open <site>".
+[sites]
+youtube = "https://www.youtube.com"
+gmail = "https://mail.google.com"
+github = "https://github.com"
+chatgpt = "https://chatgpt.com"
+whatsapp = "https://web.whatsapp.com"
+
+# Contact names the assistant can email. "mom" = "mom@example.com"
+[contacts]

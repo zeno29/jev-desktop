@@ -1,0 +1,6 @@
+# Optional: offline voice (no audio leaves your PC).
+#   pip install -r requirements-local-voice.txt
+#   python -m jev_assistant.voice.setup_local            # Hinglish speech-to-text model (~80 MB)
+#   python -m jev_assistant.voice.setup_local --kokoro   # + Kokoro offline voice (~350 MB)
+faster-whisper>=1.2.1     # offline speech-to-text
+kokoro-onnx>=0.4.7        # offline neural voice (bundles espeak-ng, GPL-3.0, for pronunciation)
